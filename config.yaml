@@ -88,9 +88,6 @@ languages:
     weight: 2
 menu:
   main:
-    - identifier: about
-      name: About
-      url: about/
     - identifier: posts
       name: Posts
       url: posts/

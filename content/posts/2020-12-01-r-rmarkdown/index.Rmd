@@ -1,0 +1,9 @@
+---
+title: "Welcome"
+author: "Faith Fatchen"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, include = FALSE)
+```
+

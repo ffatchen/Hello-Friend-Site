@@ -1,0 +1,151 @@
+---
+author:
+  name: "Faith Fatchen"
+date: 2022-03-20
+linktitle: Linear Regression using Tidymodels
+type:
+- post
+- posts
+title: Linear Regression using Tidymodels
+weight: 10
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>This article will cover how to fit a linear regression using <code>tidymodels</code>. The data set being used can be found <a href="https://www.kaggle.com/shivam2503/diamonds">here</a>. We will be fitting a modle to predict diamond. We will start by fitting a simple linear regression, then moving on to multiple linear regression.</p>
+<div id="setting-up-packages-and-getting-the-data" class="section level3">
+<h3>Setting up Packages and Getting the Data</h3>
+<p>Let’s get everything set up! Make sure you’ve installed the <code>tidymodels</code> package <code>install.packages('tidymodels')</code> We will also be working with some other packages. Install <code>dplyr</code> for data management and <code>ggplot2</code> for graphing Next, so you can follow along, download the dataset to your working directory <a href="https://www.kaggle.com/shivam2503/diamonds">get the data here!</a></p>
+<pre class="r"><code>knitr::opts_chunk$set(echo = TRUE)
+library(tidymodels)</code></pre>
+<pre><code>## ── Attaching packages ────────────────────────────────────── tidymodels 0.2.0 ──</code></pre>
+<pre><code>## ✓ broom        0.7.12     ✓ recipes      0.2.0 
+## ✓ dials        0.1.0      ✓ rsample      0.1.1 
+## ✓ dplyr        1.0.8      ✓ tibble       3.1.6 
+## ✓ ggplot2      3.3.5      ✓ tidyr        1.2.0 
+## ✓ infer        1.0.0      ✓ tune         0.2.0 
+## ✓ modeldata    0.1.1      ✓ workflows    0.2.6 
+## ✓ parsnip      0.2.1      ✓ workflowsets 0.2.1 
+## ✓ purrr        0.3.4      ✓ yardstick    0.0.9</code></pre>
+<pre><code>## Warning: package &#39;broom&#39; was built under R version 4.0.5</code></pre>
+<pre><code>## Warning: package &#39;dials&#39; was built under R version 4.0.5</code></pre>
+<pre><code>## Warning: package &#39;dplyr&#39; was built under R version 4.0.5</code></pre>
+<pre><code>## Warning: package &#39;parsnip&#39; was built under R version 4.0.5</code></pre>
+<pre><code>## Warning: package &#39;recipes&#39; was built under R version 4.0.5</code></pre>
+<pre><code>## Warning: package &#39;tidyr&#39; was built under R version 4.0.5</code></pre>
+<pre><code>## Warning: package &#39;tune&#39; was built under R version 4.0.5</code></pre>
+<pre><code>## Warning: package &#39;workflows&#39; was built under R version 4.0.5</code></pre>
+<pre><code>## Warning: package &#39;workflowsets&#39; was built under R version 4.0.5</code></pre>
+<pre><code>## ── Conflicts ───────────────────────────────────────── tidymodels_conflicts() ──
+## x purrr::discard() masks scales::discard()
+## x dplyr::filter()  masks stats::filter()
+## x dplyr::lag()     masks stats::lag()
+## x recipes::step()  masks stats::step()
+## • Use tidymodels_prefer() to resolve common conflicts.</code></pre>
+<pre class="r"><code>library(dplyr)
+library(ggplot2)
+diamonds&lt;-read.csv(&quot;/Users/faithfatchen/Downloads/diamonds.csv&quot;)</code></pre>
+</div>
+<div id="simple-linear-regression" class="section level3">
+<h3>Simple Linear Regression</h3>
+<p>The <code>diamonds</code> dataset includes 11 variables for over 50,000 diamonds. For our simple linear regression we will be looking at the <code>price</code> of a diamond with <code>carat</code> as the predictor.</p>
+<p>Before we fit the model, we should plot the data to check for a linear relationship.</p>
+<pre class="r"><code>ggplot(diamonds, aes(x=carat, y=price)) + geom_point() + theme_bw()</code></pre>
+<p><img src="/posts/lm_tidy_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+<p>We will be modeling the data using the <code>parsnips</code> package which is included in <code>tidymodels</code> We first start by specifying a linear regression model.</p>
+<pre class="r"><code>lm_spec &lt;- linear_reg() %&gt;%
+  set_mode(&quot;regression&quot;) %&gt;%
+  set_engine(&quot;lm&quot;)</code></pre>
+<p>We then use this specification to run our model. To run the model we will pass the specification our variables using <code>fit(y ~ x, data = )</code>, where <code>y</code> is the response variable and <code>x</code> is the predictor.</p>
+<pre class="r"><code>lm_simple &lt;- lm_spec %&gt;%
+  fit(price ~ carat, data = diamonds ) 
+
+lm_simple</code></pre>
+<pre><code>## parsnip model object
+## 
+## 
+## Call:
+## stats::lm(formula = price ~ carat, data = data)
+## 
+## Coefficients:
+## (Intercept)        carat  
+##       -2256         7756</code></pre>
+<p>We did it! These are the results for the simple linear regression. Let’s look at some of the model details.</p>
+<p>To get more model information such as <span class="math inline">\(R^2\)</span> and coefficient p-values we can use the <code>summary</code> function on the <code>lm</code> object.</p>
+<pre class="r"><code>lm_simple %&gt;% 
+  pluck(&quot;fit&quot;) %&gt;%
+  summary()</code></pre>
+<pre><code>## 
+## Call:
+## stats::lm(formula = price ~ carat, data = data)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -18585.3   -804.8    -18.9    537.4  12731.7 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -2256.36      13.06  -172.8   &lt;2e-16 ***
+## carat        7756.43      14.07   551.4   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 1549 on 53938 degrees of freedom
+## Multiple R-squared:  0.8493, Adjusted R-squared:  0.8493 
+## F-statistic: 3.041e+05 on 1 and 53938 DF,  p-value: &lt; 2.2e-16</code></pre>
+<p>** Note: If you wish to use <code>predict()</code> you ust specify the data to be used for prediction. For our example, this would we have</p>
+<pre class="r"><code>predict(lm_simple, new_data = diamonds)</code></pre>
+<pre><code>## # A tibble: 53,940 × 1
+##      .pred
+##      &lt;dbl&gt;
+##  1 -472.  
+##  2 -628.  
+##  3 -472.  
+##  4   -7.00
+##  5  148.  
+##  6 -395.  
+##  7 -395.  
+##  8 -240.  
+##  9 -550.  
+## 10 -472.  
+## # … with 53,930 more rows</code></pre>
+</div>
+<div id="multiple-linear-regression" class="section level3">
+<h3>Multiple Linear Regression</h3>
+<p>Lucky for us, everything works extremely similarly to the case of the simple linear regression. For multiple linear regression we will be adding additional predictors. This will take the form <span class="math inline">\(y\)</span> ~ x_1 + x_2 + … +x_n.
+Just like before, we start by specifying then using this specification we will fit our model. See if you can do this on your own, then come back to check your work. Fit a multiple linear regression using <code>price</code> as the response variable and <code>carat</code>, <code>depth</code> and <code>table</code> as the predictors.</p>
+<p>Since, we already declared our specification we will jump to fitting our model.</p>
+<pre class="r"><code>lm_mult &lt;- lm_spec %&gt;% 
+  fit(price ~ carat + depth + table, data = diamonds)
+
+lm_mult</code></pre>
+<pre><code>## parsnip model object
+## 
+## 
+## Call:
+## stats::lm(formula = price ~ carat + depth + table, data = data)
+## 
+## Coefficients:
+## (Intercept)        carat        depth        table  
+##     13003.4       7858.8       -151.2       -104.5</code></pre>
+<p>From here, everything else works the same.</p>
+</div>
+<div id="interactions-and-qualitative-predictors" class="section level3">
+<h3>Interactions and Qualitative Predictors</h3>
+<p>Again, we are lucky and adding interactions terms is very similar to the multiple linear regression. There are two options to add a interaction term</p>
+<ul>
+<li><span class="math inline">\(x_1 * x_2\)</span> will add <span class="math inline">\(x_1\)</span>, <span class="math inline">\(x_2\)</span> and the interaction between <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_2\)</span></li>
+<li><span class="math inline">\(x_1 : x_2\)</span> will only include the interaction</li>
+</ul>
+<p>Just like when we added additional predictors we will just <span class="math inline">\(\textbf{add}\)</span> the interaction to when we fit the model.</p>
+<p>Now let’s add a categorical predictor to our model. The <code>cut</code> of a diamond is likely a good predictor of the <code>price</code>.
+This variable has 5 levels, so when we fit the model we want one level left out for comparison. Using <code>lm()</code> we do not have to do anything extra to include this varialbe in our model. However, different engines may not know how to handle such variables, so beware of this issue when you go to use a different engine.</p>
+</div>
+<div id="all-done" class="section level3">
+<h3>All done!</h3>
+<p>Great job! You fit a linear regression using <code>tidymodels</code></p>
+</div>
+</div>

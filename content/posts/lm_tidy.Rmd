@@ -1,0 +1,110 @@
+---
+author:
+  name: "Faith Fatchen"
+date: 2022-03-20
+linktitle: Linear Regression using Tidymodels
+type:
+- post
+- posts
+title: Linear Regression using Tidymodels
+weight: 10
+---
+
+## Introduction
+
+This article will cover how to fit a linear regression using `tidymodels`. The data set being used can be found [here](https://www.kaggle.com/shivam2503/diamonds). We will be fitting a modle to predict diamond. We will start by fitting a simple linear regression, then moving on to multiple linear regression.
+
+### Setting up Packages and Getting the Data
+
+Let's get everything set up! Make sure you've installed the `tidymodels` package `install.packages('tidymodels')` We will also be working with some other packages. Install `dplyr` for data management and `ggplot2` for graphing Next, so you can follow along, download the dataset to your working directory [get the data here!](https://www.kaggle.com/shivam2503/diamonds)
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidymodels)
+library(dplyr)
+library(ggplot2)
+diamonds<-read.csv("/Users/faithfatchen/Downloads/diamonds.csv")
+```
+
+### Simple Linear Regression
+
+The `diamonds` dataset includes 11 variables for over 50,000 diamonds. For our simple linear regression we will be looking at the `price` of a diamond with `carat` as the predictor.
+
+Before we fit the model, we should plot the data to check for a linear relationship.
+
+```{r}
+ggplot(diamonds, aes(x=carat, y=price)) + geom_point() + theme_bw()
+```
+
+We will be modeling the data using the `parsnips` package which is included in `tidymodels` We first start by specifying a linear regression model.
+
+```{r}
+lm_spec <- linear_reg() %>%
+  set_mode("regression") %>%
+  set_engine("lm")
+```
+
+We then use this specification to run our model. To run the model we will pass the specification our variables using `fit(y ~ x, data = )`, where `y` is the response variable and `x` is the predictor.
+
+```{r}
+lm_simple <- lm_spec %>%
+  fit(price ~ carat, data = diamonds ) 
+
+lm_simple
+```
+
+We did it! These are the results for the simple linear regression. Let's look at some of the model details.
+
+To get more model information such as $R^2$ and coefficient p-values we can use the `summary` function on the `lm` object.
+
+```{r}
+lm_simple %>% 
+  pluck("fit") %>%
+  summary()
+```
+
+\*\* Note: If you wish to use `predict()` you ust specify the data to be used for prediction. For our example, this would we have
+
+```{r}
+predict(lm_simple, new_data = diamonds)
+```
+
+### Multiple Linear Regression
+
+Lucky for us, everything works extremely similarly to the case of the simple linear regression. For multiple linear regression we will be adding additional predictors. This will take the form $y$ \~ x_1 + x_2 + ... +x_n.
+Just like before, we start by specifying then using this specification we will fit our model. See if you can do this on your own, then come back to check your work. Fit a multiple linear regression using `price` as the response variable and `carat`, `depth` and `table` as the predictors.
+
+
+
+
+
+
+Since, we already declared our specification we will jump to fitting our model.
+
+```{r}
+lm_mult <- lm_spec %>% 
+  fit(price ~ carat + depth + table, data = diamonds)
+
+lm_mult
+
+```
+
+From here, everything else works the same. 
+
+### Interactions and Qualitative Predictors 
+
+Again, we are lucky and adding interactions terms is very similar to the multiple linear regression. There are two options to add a interaction term 
+
+- $x_1 * x_2$ will add $x_1$, $x_2$ and the interaction between $x_1$ and $x_2$
+- $x_1 : x_2$ will only include the interaction
+
+Just like when we added additional predictors we will just $\textbf{add}$ the interaction to when we fit the model.
+
+Now let's add a categorical predictor to our model. The `cut` of a diamond is likely a good predictor of the `price`. 
+This variable has 5 levels, so when we fit the model we want one level left out for comparison. Using `lm()` we do not have to do anything extra to include this varialbe in our model. However, different engines may not know how to handle such variables, so beware of this issue when you go to use a different engine. 
+
+### All done!
+
+Great job! You fit a linear regression using `tidymodels`
+
+
